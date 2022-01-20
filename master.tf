@@ -1,3 +1,8 @@
+provider "aws" {
+  version = "2.0.0"
+  region  = "us-east-1"
+}
+
 resource "aws_instance" "jmeter-master-instance" {
 
   ami = "${lookup(var.aws_amis, var.aws_region)}"
@@ -17,11 +22,14 @@ resource "aws_instance" "jmeter-master-instance" {
   }
 
   provisioner "remote-exec" {
-    inline = [ 
+    inline = [
       "sudo mkdir /jmeter-master",
       "mkdir ~/.aws",
-      "sudo chown -R ec2-user /jmeter-master",
-      "sudo pip install boto3"
+      "sudo chown -R ec2-user:ec2-user /jmeter-master",
+      "sudo chown -R ec2-user:ec2-user /var/www/html",
+      "sudo pip install boto3==1.3 pathlib",
+      "echo export JVM_ARGS='\"-Xms2g -Xmx3g -XX:MaxMetaspaceSize=3g\"' >> ~/.bashrc",
+      "sudo service httpd start"
     ]
   }
 
@@ -46,8 +54,8 @@ EOF
   provisioner "remote-exec" {
     inline = [
       "cd /jmeter-master/",
-      "curl ${var.jmeter3_url} > jMeter.tgz",
-      "tar zxvf jMeter.tgz"
+      "curl ${var.jmeter3_url} -o jMeter.tgz",
+      "tar -zxvf jMeter.tgz"
     ]
   }
 }

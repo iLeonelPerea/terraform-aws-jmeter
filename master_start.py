@@ -5,7 +5,7 @@ import subprocess
 
 ASG_NAME = "jmeter-slave-ASG"
 
-JMETER_PATH = "apache-jmeter-3.0/bin/jmeter"
+JMETER_PATH = "apache-jmeter-5.2.1/bin/jmeter"
 JMETER_SCRIPT = "script.jmx"
 
 class Instance:
@@ -46,10 +46,15 @@ class AutoscalingGroup:
 
 		return instances
 
-autoscalingGroup = AutoscalingGroup(boto3.client('autoscaling'), boto3.client('ec2'), ASG_NAME)
+
+autoscalingGroup = AutoscalingGroup(boto3.client(
+	'autoscaling', region_name='us-east-1'), boto3.client('ec2', region_name='us-east-1'), ASG_NAME)
 instances = autoscalingGroup.getInstances()
 absoluteJmeterPath = os.path.join(sys.path[0], JMETER_PATH)
 
-command = [absoluteJmeterPath, '-n', '-t', JMETER_SCRIPT, '-R ']
+command = [absoluteJmeterPath, '-Jserver.rmi.ssl.disable=true',
+           '-Jserver.rmi.port=1664', '-n', '-t', JMETER_SCRIPT,
+           '-f', '-l', '/jmeter-master/report.txt', '-e', '-o', '/var/www/html/',
+		   '-L', 'jmeter.util=DEBUG',  '-R']
 command[-1] += ','.join([instance.getPrivateIP() for instance in instances])
 subprocess.call(command)

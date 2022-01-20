@@ -33,11 +33,24 @@ resource "aws_security_group_rule" "egress-public-sgr" {
 }
 
 resource "aws_security_group_rule" "ingress-public-sgr" {
+  count = "${length(var.master_ingress_rules)}"
+  
   type = "ingress"
-  from_port = 22
-  to_port = 22
+  from_port = "${var.master_ingress_rules[count.index]}"
+  to_port = "${var.master_ingress_rules[count.index]}"
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = "${aws_security_group.jmeter-sg.id}"
 }
+
+# resource "aws_security_group_rule" "ingress-public-sgr" {
+#   count = "${var.master_ingress_rules}"
+
+#   type              = "ingress"
+#   from_port         = "${var.master_ingress_rules[count.index].from_port}"
+#   to_port           = "${var.master_ingress_rules[count.index].to_port}"
+#   protocol          = "${var.master_ingress_rules[count.index].protocol}"
+#   cidr_blocks       = ["${var.master_ingress_rules[count.index].cidr_block}"]
+#   security_group_id = "${aws_security_group.jmeter-sg.id}"
+# }
